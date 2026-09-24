@@ -1,0 +1,15 @@
+.git
+.github
+**/bin
+**/obj
+**/.vs
+# Ninguna config con credenciales entra a la imagen: la cadena de conexión llega
+# por ConnectionStrings__Proveedores (variable de entorno del compose).
+# appsettings.Development.json tampoco: sólo tiene placeholders y el container
+# no corre en Development.
+**/appsettings.json
+**/appsettings.*.json
+**/launchSettings.json
+docker-compose.yml
+.env
+*.md
