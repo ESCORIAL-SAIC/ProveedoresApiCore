@@ -15,10 +15,9 @@ if (args.Contains("--self-check"))
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Configuration
-    .SetBasePath(Directory.GetCurrentDirectory())
-    .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-    .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true);
+// CreateBuilder ya carga appsettings*.json y después las variables de entorno, que ganan.
+// Volver a agregar los json acá los dejaba por encima: un "" en appsettings.json pisaba
+// ConnectionStrings__Proveedores.
 
 // Falla acá con un mensaje claro, en vez de una excepción de Npgsql en el primer request.
 var conexion = builder.Configuration.GetConnectionString("Proveedores");
@@ -55,6 +54,17 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors();
+
+// Postgres no acepta NUL en un text: sin esto un %00 en buscar/orden/factura da 500.
+app.Use(async (ctx, next) =>
+{
+    if (ctx.Request.QueryString.Value?.Contains("%00") == true)
+    {
+        ctx.Response.StatusCode = StatusCodes.Status400BadRequest;
+        return;
+    }
+    await next();
+});
 
 // La versión la inyecta MinVer en build (o /p:MinVerVersionOverride en el CI).
 // El sufijo "+metadata" del InformationalVersion no aporta acá.

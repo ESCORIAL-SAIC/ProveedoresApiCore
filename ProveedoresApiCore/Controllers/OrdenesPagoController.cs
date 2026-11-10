@@ -14,7 +14,7 @@ namespace ProveedoresApiCore.Controllers
         // el WHERE, así que los filtros pasan a ser query string opcionales.
         [HttpGet("{proveedorId}")]
         public async Task<IActionResult> GetOrdenesPago(
-            string proveedorId, string? buscar = null, string? orden = null, string? factura = null)
+            Guid proveedorId, string? buscar = null, string? orden = null, string? factura = null)
         {
             try
             {

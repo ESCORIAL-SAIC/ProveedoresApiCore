@@ -11,7 +11,7 @@ namespace ProveedoresApiCore.Controllers
         ProveedoresContext context, ILogger<OrdenesCompraController> log) : ControllerBase
     {
         [HttpGet("{proveedorId}")]
-        public async Task<IActionResult> GetOrdenesCompra(string proveedorId, string? buscar = null)
+        public async Task<IActionResult> GetOrdenesCompra(Guid proveedorId, string? buscar = null)
         {
             try
             {
@@ -40,7 +40,7 @@ namespace ProveedoresApiCore.Controllers
         // La ruta vieja era .../item/lista/proveedor/{id}, pero el parámetro nunca fue
         // un proveedor: filtra por transaccion_id. La ruta nueva lo refleja.
         [HttpGet("{transaccionId}/items")]
-        public async Task<IActionResult> GetItems(string transaccionId)
+        public async Task<IActionResult> GetItems(Guid transaccionId)
         {
             try
             {
@@ -63,7 +63,7 @@ namespace ProveedoresApiCore.Controllers
         private static OrdenCompraDto MapToDto(OrdenCompraVista o) =>
             new()
             {
-                Id = o.TransaccionId,
+                Id = o.TransaccionId.ToString(),
                 NumeroDocumento = o.NumeroDocumento ?? string.Empty,
                 Transaccion = o.Transaccion ?? string.Empty,
                 NombreProveedor = o.Proveedor ?? string.Empty,
@@ -73,7 +73,7 @@ namespace ProveedoresApiCore.Controllers
         private static ItemOrdenCompraDto MapItemToDto(ItemOrdenCompraVista i) =>
             new()
             {
-                Id = i.TransaccionId,
+                Id = i.TransaccionId.ToString(),
                 CodigoProducto = i.CodigoProducto ?? string.Empty,
                 DescripcionProducto = i.DescripcionProducto ?? string.Empty,
                 CantidadPendiente = Formato.Numero(i.CantidadPendiente),
