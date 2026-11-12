@@ -509,3 +509,6 @@ local.properties
 *.rdp
 *.publishsettings
 *.pubxml.user
+
+# Salida de dotnet test (JUnit) del CI
+reports/

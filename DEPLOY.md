@@ -3,40 +3,44 @@
 API de portal de proveedores, extraída de `EscorialAPI`. Lee 5 vistas de solo lectura
 del esquema `web` en PostgreSQL. El consumidor es `PortalProveedores.Web`.
 
-## Versionado
+## Versionado y publicación
 
-Los **git tags son la única fuente de verdad**. No hay números de versión escritos a mano.
-Al mergear una PR, el workflow calcula la versión y crea el tag:
+La versión vive en **tags anotados** (`0.1.1-rc.1`, mensaje `versionCode=N`), sin prefijo
+`v`. El CI nunca commitea versiones. Cada PR compila la imagen con su versión definitiva
+y, al mergear, se publica **esa misma imagen** (no se recompila).
 
-| Label en la PR | Efecto |
+| Destino de la PR | Resultado |
 |---|---|
-| `release:major` | `1.2.3` → `2.0.0` |
-| `release:minor` | `1.2.3` → `1.3.0` |
-| *(ninguna)* | `1.2.3` → `1.2.4` |
-| `release:skip` | no versiona |
+| PR a **`dev`** | pre-release `X.Y.Z-rc.N`, imágenes `:X.Y.Z-rc.N` y `:dev` |
+| PR **`dev` → `main`** | release estable `X.Y.Z`, imágenes `:X.Y.Z`, `:X.Y` y `:latest` |
 
-- PR a **`dev`** → pre-release `vX.Y.Z-rc.N`, imágenes `:X.Y.Z-rc.N` y `:dev`
-- PR a **`main`** → release final `vX.Y.Z`, imágenes `:X.Y.Z`, `:X.Y` y `:latest`
+Etiqueta de la PR a `dev` (sin etiqueta = `bugfix`):
 
-Probar el cálculo sin tocar GitHub:
+| Etiqueta | Efecto |
+|---|---|
+| `bugfix` | sube PATCH |
+| `feature` | sube MINOR |
+| `breaking` | sube MAJOR |
 
-```bash
-DRY_RUN=1 GITHUB_REF=refs/heads/main PR_LABELS="release:minor" MOCK_TAGS="v0.1.0" \
-  bash .github/scripts/compute-version.sh     # -> version=0.2.0
-```
+Checks obligatorios para mergear: `test` (xUnit, un check por test) y `Compilar imagen`
+(build + escaneo trivy; falla ante HIGH/CRITICAL con fix disponible). Solo merge commit.
+
+Probar el cálculo de versión sin tocar GitHub: `bash .github/scripts/test-version.sh`.
+Tests locales: `dotnet test ProveedoresApiCore.slnx`.
 
 ## Setup único del repo
 
 ```bash
-gh label create release:minor -c 0e8a16 -d "Sube MINOR al mergear"
-gh label create release:major -c b60205 -d "Sube MAJOR al mergear"
-gh label create release:skip  -c cccccc -d "No versiona esta PR"
-
-git tag v0.1.0 && git push origin v0.1.0
+gh label create bugfix   -c d73a4a -d "PR que sube PATCH (default)"
+gh label create feature  -c 0e8a16 -d "PR que sube MINOR"
+gh label create breaking -c b60205 -d "PR que sube MAJOR"
+gh api -X PATCH repos/ESCORIAL-SAIC/ProveedoresApiCore \
+  -F allow_merge_commit=true -F allow_squash_merge=false -F allow_rebase_merge=false
 ```
 
-Además: Settings → Actions → Workflow permissions → **Read and write**, y hacer público el
-package en GHCR si el server lo baja sin login.
+Además: Settings → Actions → Workflow permissions → **Read and write**, rulesets de `dev` y
+`main` con los checks `test` y `Compilar imagen`, y el package de GHCR público si el server
+lo baja sin login.
 
 ## Endpoints de estado
 

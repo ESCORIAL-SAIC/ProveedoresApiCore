@@ -5,9 +5,8 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <!-- MinVer deriva la versión de los git tags en build local; el CI la
-         sobrescribe con /p:MinVerVersionOverride desde compute-version.sh. -->
-    <MinVerTagPrefix>v</MinVerTagPrefix>
+    <!-- MinVer deriva la versión de los git tags (sin prefijo "v") en build local;
+         el CI la sobrescribe con /p:MinVerVersionOverride desde el Dockerfile. -->
   </PropertyGroup>
 
   <ItemGroup>
