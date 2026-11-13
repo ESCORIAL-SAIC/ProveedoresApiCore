@@ -47,6 +47,9 @@ jobs:
       - name: Token de la GitHub App
         id: app-token
         if: ${{ !cancelled() && env.HAS_APP == 'true' }}
+        # Los secrets son de la org, pero la app puede no estar instalada en este repo
+        # (404): en ese caso se cae al GITHUB_TOKEN y los checks salen agrupados.
+        continue-on-error: true
         uses: actions/create-github-app-token@v3
         with:
           app-id: ${{ secrets.CI_APP_ID }}
