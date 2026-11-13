@@ -11,7 +11,7 @@ namespace ProveedoresApiCore.Controllers
         ProveedoresContext context, ILogger<FacturasPendientesController> log) : ControllerBase
     {
         [HttpGet("{proveedorId}")]
-        public async Task<IActionResult> GetFacturasPendientes(string proveedorId)
+        public async Task<IActionResult> GetFacturasPendientes(Guid proveedorId)
         {
             try
             {
@@ -45,7 +45,7 @@ namespace ProveedoresApiCore.Controllers
                 Saldo = Formato.Importe(f.Saldo),
                 FechaVencimiento = Formato.Fecha(f.FechaVencimiento),
                 SaldoConvertido = Formato.Importe(f.SaldoConv),
-                Cotizacion = Formato.Importe(f.Cotizacion),
+                Cotizacion = Formato.CotizacionTexto(f.Cotizacion),
                 FechaActualizacion = Formato.Ahora()
             };
     }
