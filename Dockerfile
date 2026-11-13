@@ -17,7 +17,14 @@ LABEL org.opencontainers.image.version=$VERSION
 COPY --from=build /app/publish .
 EXPOSE 8080
 # curl no viene en la imagen aspnet; hace falta para el HEALTHCHECK.
-RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
+# --only-upgrade apt: la base trae un apt con CVE HIGH (trivy) que ya tiene fix publicado.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends --only-upgrade apt \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+# La imagen base trae el usuario `app`; sin esto el proceso corre como root.
+# ASPNETCORE_HTTP_PORTS=8080 ya es la base, así que no necesita puerto privilegiado.
+USER $APP_UID
 # Apunta a liveness: no debe fallar porque la base esté caída.
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
     CMD curl -fsS http://localhost:8080/health/live || exit 1
