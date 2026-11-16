@@ -1,7 +1,7 @@
 # Base de prueba local, sintética. No apunta ni se parece a producción.
 # Misma versión mayor y misma configuración regional que la real (PostgreSQL 12,
 # en_US.UTF-8, ISO YMD, America/Argentina/Buenos_Aires).
-# Uso: docker compose -f db-test/docker-compose.test.yml up -d
+# Uso: bash db-test/make-share.sh && docker compose -f db-test/docker-compose.test.yml up -d
 services:
   db:
     image: postgres:12
@@ -17,3 +17,18 @@ services:
       - "127.0.0.1:54329:5432"
     volumes:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+
+  # Share SMB de prueba con los PDF que descarga el portal. Solo escucha en loopback.
+  # Estructura: PortalProveedores/PDF/{OrdenPago,OrdenCompra}/{<proveedor_id>}/*.pdf
+  # Generar los archivos antes: bash db-test/make-share.sh
+  # Usuario: portal / portal. Lectura y escritura para poder agregar archivos a mano.
+  share:
+    image: dperson/samba:latest
+    container_name: proveedores-test-share
+    environment:
+      TZ: America/Argentina/Buenos_Aires
+    command: ["-u", "portal;portal", "-s", "PortalProveedores;/mnt/PortalProveedores;yes;no;no;portal;portal;portal"]
+    ports:
+      - "127.0.0.1:445:445"
+    volumes:
+      - ./share:/mnt/PortalProveedores
