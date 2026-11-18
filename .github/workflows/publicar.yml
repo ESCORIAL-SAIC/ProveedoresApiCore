@@ -113,6 +113,7 @@ jobs:
           for f in $(jq -r '.archivos[]' "$meta"); do
             [ -f "artefacto/$f" ] || { echo "❌ Falta artefacto/$f"; exit 1; }
           done
+          jq -e '.archivos | any(endswith(".zip"))' "$meta" >/dev/null || { echo "❌ El artefacto no trae el zip para Windows"; exit 1; }
           # Si el tag ya existe sobre ESTE merge con el mismo versionCode, es un re-run de
           # una publicación que falló después de crearlo: se completa sin volver a taguear.
           reintento=false
@@ -141,6 +142,10 @@ jobs:
             echo "versionCode=$versionCode"
             echo "archivos<<EOF"
             jq -r '.archivos[] | "artefacto/" + .' "$meta"
+            echo "EOF"
+            # Solo el zip va a la release: la imagen (cientos de MB) va a GHCR.
+            echo "archivos_release<<EOF"
+            jq -r '.archivos[] | select(endswith(".zip")) | "artefacto/" + .' "$meta"
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
           echo "✅ Se publica $version ($versionCode) en $BASE_REF"
@@ -233,4 +238,5 @@ jobs:
             ${{ steps.notas.outputs.body }}
 
             Imagen: ${{ steps.ghcr.outputs.imagen }} — Digest: ${{ steps.ghcr.outputs.digest }}
+          files: ${{ steps.verificar.outputs.archivos_release }}
           prerelease: ${{ steps.verificar.outputs.destino == 'dev' }}
