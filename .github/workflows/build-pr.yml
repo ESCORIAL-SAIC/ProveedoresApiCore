@@ -177,6 +177,32 @@ jobs:
             --severity HIGH,CRITICAL --ignore-unfixed --scanners vuln --exit-code 1
           gzip -c "$TAR" > "artefacto/imagen-$version.tar.gz"
 
+      # Artefacto adicional para correr la API nativa en Windows Server con IIS (sin Docker).
+      # Depende del runtime: en el servidor va el .NET 10 Hosting Bundle.
+      - uses: actions/setup-dotnet@v6
+        if: steps.pr.outputs.aplica == 'true'
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Publicar para Windows
+        if: steps.pr.outputs.aplica == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/out"
+          dotnet publish ProveedoresApiCore/ProveedoresApiCore.csproj -c Release \
+            -r win-x64 --self-contained false -p:MinVerVersionOverride="$version" -o "$out"
+          # Sin web.config IIS no arranca el sitio.
+          for f in web.config ProveedoresApiCore.exe ProveedoresApiCore.dll appsettings.ejemplo.json; do
+            [ -e "$out/$f" ] || { echo "❌ Falta $f en la publicación"; exit 1; }
+          done
+          # appsettings.json NO va (la configuración la pone sistemas en el servidor, así
+          # actualizar no la pisa). Tampoco la de desarrollo: solo viaja appsettings.ejemplo.json.
+          for f in appsettings.json appsettings.Development.json; do
+            [ ! -e "$out/$f" ] || { echo "❌ $f no debe publicarse"; exit 1; }
+          done
+          (cd "$out" && zip -qr "$GITHUB_WORKSPACE/artefacto/proveedores-api-$version-win-x64.zip" .)
+
       - name: Datos de la compilación
         if: steps.pr.outputs.aplica == 'true'
         shell: bash
