@@ -202,6 +202,8 @@ jobs:
             [ ! -e "$out/$f" ] || { echo "❌ $f no debe publicarse"; exit 1; }
           done
           (cd "$out" && zip -qr "$GITHUB_WORKSPACE/artefacto/proveedores-api-$version-win-x64.zip" .)
+          # El script de instalacion va suelto en la release, no dentro del zip.
+          cp scripts/instalar-iis.ps1 artefacto/instalar-iis.ps1
 
       - name: Datos de la compilación
         if: steps.pr.outputs.aplica == 'true'

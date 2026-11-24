@@ -143,9 +143,9 @@ jobs:
             echo "archivos<<EOF"
             jq -r '.archivos[] | "artefacto/" + .' "$meta"
             echo "EOF"
-            # Solo el zip va a la release: la imagen (cientos de MB) va a GHCR.
+            # Solo el zip y el script van a la release: la imagen (cientos de MB) va a GHCR.
             echo "archivos_release<<EOF"
-            jq -r '.archivos[] | select(endswith(".zip")) | "artefacto/" + .' "$meta"
+            jq -r '.archivos[] | select(endswith(".zip") or endswith(".ps1")) | "artefacto/" + .' "$meta"
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
           echo "✅ Se publica $version ($versionCode) en $BASE_REF"
