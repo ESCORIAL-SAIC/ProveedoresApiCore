@@ -10,16 +10,31 @@ namespace ProveedoresApiCore.Controllers
     public class FacturasPendientesController(
         ProveedoresContext context, ILogger<FacturasPendientesController> log) : ControllerBase
     {
+        private static readonly string[] Ordenables = ["fecha", "vencimiento", "saldo"];
+
+        // Parámetros opcionales: pagina, tamano, desde, hasta (sobre fechavencimiento), ordenar, dir.
         [HttpGet("{proveedorId}")]
         public async Task<IActionResult> GetFacturasPendientes(Guid proveedorId)
         {
+            var c = Consulta.Leer(Request.Query, Ordenables, out var error);
+            if (c is null) return BadRequest(error);
             try
             {
-                var facturas = await context.FacturasPendientes
-                    .Where(f => f.ProveedorId == proveedorId)
-                    .OrderByDescending(f => f.FechaFactura)
-                    .Take(50)
-                    .ToListAsync();
+                var q = context.FacturasPendientes.Where(f => f.ProveedorId == proveedorId);
+
+                if (c.Desde is { } desde) q = q.Where(f => f.FechaVencimiento >= desde);
+                if (c.HastaFin is { } fin) q = q.Where(f => f.FechaVencimiento < fin);
+
+                // La vista no tiene columna única: se desempata por las columnas que salen en el DTO.
+                var facturas = await q.Paginar(f => (c.Ordenar switch
+                    {
+                        "vencimiento" => f.OrdenarPor(x => x.FechaVencimiento, c.Desc),
+                        "saldo" => f.OrdenarPor(x => x.SaldoConv, c.Desc),
+                        _ => f.OrdenarPor(x => x.FechaFactura, c.Desc)
+                    })
+                    .ThenBy(x => x.NroFactura).ThenBy(x => x.TipoTransaccion).ThenBy(x => x.Total)
+                    .ThenBy(x => x.Saldo).ThenBy(x => x.FechaVencimiento).ThenBy(x => x.Moneda)
+                    .ThenBy(x => x.Proveedor), c, Response);
 
                 // Lista vacía devuelve 200 [], no 404: el portal trata "sin resultados"
                 // y "no existe" igual, y un 404 lo obligaría a distinguirlos.
