@@ -144,6 +144,16 @@ Para actualizar:
    (solo trae `appsettings.ejemplo.json`).
 4. Borrar `app_offline.htm`.
 
+## Despliegue automatico (solo estables)
+
+Al publicarse una release **estable** (PR `dev` -> `main`), el job `Desplegar en IIS` de
+`publicar.yml` corre en un runner propio del servidor (etiqueta `iis-api`) y ejecuta
+`C:\deploy\desplegar-iis.ps1`. Los rc de `dev` se publican pero **no** se despliegan.
+El script vive en el servidor, no en el repo. Descomprime en una carpeta nueva por version, la
+prueba aparte (`/health/ready`), cambia el sitio y verifica; si algo falla, vuelve a la carpeta
+anterior y el job queda en rojo. El runner corre como SYSTEM: mantener en Settings > Actions la
+aprobacion para colaboradores externos y no usar la etiqueta `iis-api` en workflows de PR.
+
 ## Permisos de base
 
 El usuario necesita sólo `SELECT` sobre las 5 vistas del esquema `web`:
