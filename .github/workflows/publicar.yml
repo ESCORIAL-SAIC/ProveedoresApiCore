@@ -240,3 +240,22 @@ jobs:
             Imagen: ${{ steps.ghcr.outputs.imagen }} — Digest: ${{ steps.ghcr.outputs.digest }}
           files: ${{ steps.verificar.outputs.archivos_release }}
           prerelease: ${{ steps.verificar.outputs.destino == 'dev' }}
+
+  # Despliega solo las estables (main) en el servidor IIS, con un runner propio. El script
+  # vive en el servidor (C:\deploy), no en el repo. Si falla, el script hace rollback y este
+  # job queda en rojo. No es un check requerido: corre despues del merge.
+  desplegar:
+    name: Desplegar en IIS
+    needs: publicar
+    if: needs.publicar.outputs.destino == 'main'
+    runs-on: [self-hosted, windows, iis-api]
+    timeout-minutes: 15
+    permissions: {}
+    steps:
+      - name: Desplegar
+        shell: powershell
+        env:
+          VERSION: ${{ needs.publicar.outputs.version }}
+        run: |
+          & C:\deploy\desplegar-iis.ps1 -Version $env:VERSION -SinPreguntas
+          if ($LASTEXITCODE -ne $null -and $LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
