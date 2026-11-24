@@ -509,3 +509,9 @@ local.properties
 *.rdp
 *.publishsettings
 *.pubxml.user
+
+# Salida de dotnet test (JUnit) del CI
+reports/
+
+# PDFs de prueba generados por db-test/make-share.sh
+db-test/share/

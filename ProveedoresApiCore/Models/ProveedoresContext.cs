@@ -19,5 +19,11 @@ public sealed class ProveedoresContext(DbContextOptions<ProveedoresContext> opti
         b.Entity<ItemOrdenCompraVista>().HasNoKey().ToView("api_portalproveedores_itemsordenescompra");
         b.Entity<OrdenPagoVista>().HasNoKey().ToView("api_portalproveedores_pagos");
         b.Entity<FacturaPendienteVista>().HasNoKey().ToView("api_portalproveedores_facturaspendientes");
+
+        // Las vistas devuelven `date`. Sin esto Npgsql manda los filtros ?desde/?hasta como
+        // timestamptz y rechaza DateTime con Kind=Unspecified.
+        b.Entity<OrdenCompraVista>().Property(x => x.FechaTransaccion).HasColumnType("date");
+        b.Entity<OrdenPagoVista>().Property(x => x.Fecha).HasColumnType("date");
+        b.Entity<FacturaPendienteVista>().Property(x => x.FechaVencimiento).HasColumnType("date");
     }
 }

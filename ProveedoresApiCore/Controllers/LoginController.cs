@@ -14,20 +14,25 @@ namespace ProveedoresApiCore.Controllers
         {
             if (datosLogin is null)
                 return BadRequest("Faltan las credenciales.");
+            // Un NUL en el texto hace fallar a Postgres con 500; no puede ser una credencial válida.
+            if (datosLogin.User.Contains('\0') || datosLogin.Password.Contains('\0'))
+                return Unauthorized();
             try
             {
                 // EF Core parametriza la comparación. El controller de EscorialAPI
                 // concatenaba usuario y clave en el SQL, así que un usuario
                 // "' or '1'='1' --" entraba como cualquier proveedor sin credenciales.
-                var proveedorId = await context.Logins
+                // Tipo anónimo (reference type): FirstOrDefault da null si no hay coincidencias.
+                // Con un Guid suelto daría Guid.Empty y no se distinguiría.
+                var login = await context.Logins
                     .Where(l => l.Usuario == datosLogin.User && l.Clave == datosLogin.Password)
-                    .Select(l => l.ProveedorId)
+                    .Select(l => new { l.ProveedorId, l.Nombre })
                     .FirstOrDefaultAsync();
 
-                if (string.IsNullOrEmpty(proveedorId))
+                if (login is null)
                     return Unauthorized();
 
-                return Ok(new { Status = "OK", Proveedor = proveedorId });
+                return Ok(new { Status = "OK", Proveedor = login.ProveedorId, login.Nombre });
             }
             catch (Exception ex)
             {
