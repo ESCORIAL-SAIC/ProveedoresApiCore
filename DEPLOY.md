@@ -72,6 +72,11 @@ Cada release de GitHub adjunta `proveedores-api-X.Y.Z-win-x64.zip`: la API publi
 Windows, dependiente del runtime. Es adicional a la imagen Docker, que sigue yendo a GHCR.
 `/version` devuelve la misma versión que la imagen.
 
+Todo lo de abajo lo hace `scripts/instalar-iis.ps1` (PowerShell como administrador):
+`.\instalar-iis.ps1 -Zip C:\ruta\proveedores-api-X.Y.Z-win-x64.zip`. Pide la cadena de conexion
+la primera vez, y el mismo comando con un zip nuevo actualiza. El .NET 10 Hosting Bundle hay que
+instalarlo antes (el script avisa si falta). `-Sitio`, `-Ruta` y `-Puerto` son opcionales.
+
 Una sola vez en el servidor:
 
 1. Rol **IIS**.
