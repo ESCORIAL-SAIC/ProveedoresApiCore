@@ -13,6 +13,7 @@ public sealed class LoginVista
     [Column("proveedor_id")] public Guid ProveedorId { get; set; }
     [Column("usuario")] public string Usuario { get; set; } = string.Empty;
     [Column("clave")] public string Clave { get; set; } = string.Empty;
+    [Column("nombre")] public string? Nombre { get; set; }
 }
 
 public sealed class OrdenCompraVista

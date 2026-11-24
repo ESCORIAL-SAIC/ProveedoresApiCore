@@ -22,17 +22,17 @@ namespace ProveedoresApiCore.Controllers
                 // EF Core parametriza la comparación. El controller de EscorialAPI
                 // concatenaba usuario y clave en el SQL, así que un usuario
                 // "' or '1'='1' --" entraba como cualquier proveedor sin credenciales.
-                // Guid? porque proveedor_id es uuid: FirstOrDefault de un Guid devolvería
-                // Guid.Empty y no habría forma de distinguir "sin coincidencias".
-                var proveedorId = await context.Logins
+                // Tipo anónimo (reference type): FirstOrDefault da null si no hay coincidencias.
+                // Con un Guid suelto daría Guid.Empty y no se distinguiría.
+                var login = await context.Logins
                     .Where(l => l.Usuario == datosLogin.User && l.Clave == datosLogin.Password)
-                    .Select(l => (Guid?)l.ProveedorId)
+                    .Select(l => new { l.ProveedorId, l.Nombre })
                     .FirstOrDefaultAsync();
 
-                if (proveedorId is null)
+                if (login is null)
                     return Unauthorized();
 
-                return Ok(new { Status = "OK", Proveedor = proveedorId });
+                return Ok(new { Status = "OK", Proveedor = login.ProveedorId, login.Nombre });
             }
             catch (Exception ex)
             {

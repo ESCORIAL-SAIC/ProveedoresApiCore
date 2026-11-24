@@ -10,22 +10,31 @@ namespace ProveedoresApiCore.Controllers
     public class OrdenesCompraController(
         ProveedoresContext context, ILogger<OrdenesCompraController> log) : ControllerBase
     {
+        private static readonly string[] Ordenables = ["fecha", "transaccion"];
+
+        // Parámetros opcionales: buscar, pagina, tamano, desde, hasta, ordenar, dir (ver DEPLOY.md).
+        // Sin ordenar el orden es el de siempre (transaccion desc); transaccion_id desempata.
         [HttpGet("{proveedorId}")]
         public async Task<IActionResult> GetOrdenesCompra(Guid proveedorId, string? buscar = null)
         {
+            var c = Consulta.Leer(Request.Query, Ordenables, out var error);
+            if (c is null) return BadRequest(error);
             try
             {
                 var q = context.OrdenesCompra.Where(o => o.ProveedorId == proveedorId);
+
+                if (c.Desde is { } desde) q = q.Where(o => o.FechaTransaccion >= desde);
+                if (c.HastaFin is { } fin) q = q.Where(o => o.FechaTransaccion < fin);
 
                 // EF.Functions.ILike genera el ILIKE de PostgreSQL con el valor
                 // parametrizado: la interpolación la traduce EF, no se concatena al SQL.
                 if (!string.IsNullOrWhiteSpace(buscar))
                     q = q.Where(o => EF.Functions.ILike(o.Transaccion!, $"%{buscar}%"));
 
-                var ordenes = await q
-                    .OrderByDescending(o => o.Transaccion)
-                    .Take(50)
-                    .ToListAsync();
+                var ordenes = await q.Paginar(f => (c.Ordenar == "fecha"
+                        ? f.OrdenarPor(o => o.FechaTransaccion, c.Desc)
+                        : f.OrdenarPor(o => o.Transaccion, c.Desc))
+                    .ThenBy(o => o.TransaccionId), c, Response);
 
                 return Ok(ordenes.Select(MapToDto).ToList());
             }

@@ -32,7 +32,8 @@ builder.Services.AddDbContext<ProveedoresContext>(o => o.UseNpgsql(conexion));
 // Acá se acota a los orígenes configurados: el único consumidor es el portal.
 var origenes = builder.Configuration.GetSection("Cors:Origenes").Get<string[]>() ?? [];
 builder.Services.AddCors(o => o.AddDefaultPolicy(p =>
-    p.WithOrigins(origenes).AllowAnyHeader().WithMethods("GET", "POST")));
+    p.WithOrigins(origenes).AllowAnyHeader().WithMethods("GET", "POST")
+        .WithExposedHeaders("X-Total-Count")));
 
 // PascalCase como el Newtonsoft de EscorialAPI: el default de ASP.NET Core es
 // camelCase y cambiaría los nombres de campo que ya consumen los clientes.

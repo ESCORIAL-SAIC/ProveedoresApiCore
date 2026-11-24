@@ -512,3 +512,6 @@ local.properties
 
 # Salida de dotnet test (JUnit) del CI
 reports/
+
+# PDFs de prueba generados por db-test/make-share.sh
+db-test/share/
